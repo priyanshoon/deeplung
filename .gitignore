@@ -1,0 +1,17 @@
+venv/
+data/
+dummy_data/
+dataset/
+archive.zip
+__pycache__/
+*.pyc
+.DS_Store
+.env
+checkpoints/
+checkpoints_dryrun/
+*.pth
+.ipynb_checkpoints/
+
+# Frontend
+frontend/node_modules/
+frontend/dist/
