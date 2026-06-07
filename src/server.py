@@ -7,6 +7,20 @@ import os
 
 from model import get_model
 
+PROJECT_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
+
+
+def resolve_model_path() -> str:
+    """Resolve checkpoint path relative to project root, not the shell cwd."""
+    candidates = [
+        os.path.join(PROJECT_ROOT, "checkpoints", "best_model.pth"),
+        os.path.join(PROJECT_ROOT, "checkpoints_dryrun", "best_model.pth"),
+    ]
+    for path in candidates:
+        if os.path.exists(path):
+            return path
+    return candidates[0]
+
 
 CLASS_NAMES = [
     "Bacterial Pneumonia",
@@ -65,14 +79,14 @@ CORS(app)
 
 device = get_device()
 
-# Determine model path automatically (same logic as streamlit app)
-default_path = "checkpoints/best_model.pth"
-if not os.path.exists(default_path) and os.path.exists(
-    "checkpoints_dryrun/best_model.pth"
-):
-    default_path = "checkpoints_dryrun/best_model.pth"
+model_path = resolve_model_path()
+model, model_error = load_model(model_path, device)
 
-model, model_error = load_model(default_path, device)
+if model is None:
+    print(f"WARNING: {model_error}")
+    print("Run 'python save_dummy.py' from the project root, then restart this server.")
+else:
+    print(f"Model loaded from {model_path}")
 
 
 @app.route("/api/health", methods=["GET"])
@@ -89,7 +103,18 @@ def health():
 @app.route("/api/predict", methods=["POST"])
 def predict():
     if model is None:
-        return jsonify({"error": f"Model not loaded: {model_error}"}), 500
+        return (
+            jsonify(
+                {
+                    "error": (
+                        f"Model not loaded: {model_error}. "
+                        "Run 'python save_dummy.py' from the project root, "
+                        "then restart the API server (python src/server.py)."
+                    )
+                }
+            ),
+            500,
+        )
 
     if "file" not in request.files:
         return (

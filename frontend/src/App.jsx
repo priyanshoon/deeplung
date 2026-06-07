@@ -124,14 +124,21 @@ function App() {
       const formData = new FormData();
       formData.append("file", selectedFile);
 
-      const response = await fetch("http://127.0.0.1:5000/api/predict", {
+      const response = await fetch("/api/predict", {
         method: "POST",
         body: formData,
       });
 
       if (!response.ok) {
-        const text = await response.text();
-        throw new Error(text || "Failed to get prediction from server");
+        let message = "Failed to get prediction from server";
+        try {
+          const errData = await response.json();
+          message = errData.error || message;
+        } catch {
+          const text = await response.text();
+          if (text) message = text;
+        }
+        throw new Error(message);
       }
 
       const data = await response.json();
@@ -139,7 +146,13 @@ function App() {
       setStep(3);
     } catch (err) {
       console.error(err);
-      setError(err.message || "Something went wrong during prediction.");
+      const isNetworkError =
+        err instanceof TypeError && /fetch|network/i.test(err.message);
+      setError(
+        isNetworkError
+          ? "Cannot reach the prediction server. Start it with: python src/server.py"
+          : err.message || "Something went wrong during prediction."
+      );
     } finally {
       setLoading(false);
     }
