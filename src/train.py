@@ -66,7 +66,7 @@ def train(args):
             running_corrects += torch.sum(preds == labels.data)
             
         epoch_loss = running_loss / len(train_loader.dataset)
-        epoch_acc = running_corrects.double() / len(train_loader.dataset)
+        epoch_acc = running_corrects.float() / len(train_loader.dataset)
         
         print(f"Train Loss: {epoch_loss:.4f} Acc: {epoch_acc:.4f}")
         
@@ -88,7 +88,7 @@ def train(args):
                 val_corrects += torch.sum(preds == labels.data)
                 
         val_loss = val_loss / len(val_loader.dataset)
-        val_acc = val_corrects.double() / len(val_loader.dataset)
+        val_acc = val_corrects.float() / len(val_loader.dataset)
         
         print(f"Val Loss: {val_loss:.4f} Acc: {val_acc:.4f}")
         
