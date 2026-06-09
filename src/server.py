@@ -7,6 +7,8 @@ import os
 
 from model import get_model
 
+import numpy as np
+
 PROJECT_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
 
 
@@ -20,6 +22,64 @@ def resolve_model_path() -> str:
         if os.path.exists(path):
             return path
     return candidates[0]
+
+
+def validate_chest_xray(img: Image.Image) -> tuple[bool, str]:
+    try:
+        # 1. Format/Dimensions check
+        width, height = img.size
+        aspect_ratio = width / height
+        if aspect_ratio < 0.5 or aspect_ratio > 2.0:
+            return False, f"Invalid aspect ratio ({aspect_ratio:.2f}). Chest X-rays should be roughly square."
+
+        img_np = np.array(img)
+
+        # 2. Color check: standard deviation across color channels
+        # For grayscale images, R, G, B channels are identical or very close.
+        rg_diff = np.abs(img_np[:, :, 0].astype(float) - img_np[:, :, 1].astype(float))
+        gb_diff = np.abs(img_np[:, :, 1].astype(float) - img_np[:, :, 2].astype(float))
+        br_diff = np.abs(img_np[:, :, 2].astype(float) - img_np[:, :, 0].astype(float))
+        color_diff = (rg_diff.mean() + gb_diff.mean() + br_diff.mean()) / 3.0
+
+        if color_diff > 12.0:
+            return False, f"Image is colored (color variance: {color_diff:.2f})."
+
+        # 3. Contrast check: X-rays have rib/spine structures which create high contrast
+        gray_img = img.convert('L')
+        gray_np = np.array(gray_img)
+        std_dev = gray_np.std()
+
+        if std_dev < 15.0:
+            return False, f"Image contrast is too low (std dev: {std_dev:.2f})."
+
+        # 4. Brightness distribution check (borders vs center)
+        h, w = gray_np.shape
+        border_w = int(w * 0.1)
+        border_h = int(h * 0.1)
+
+        border_pixels = []
+        border_pixels.extend(gray_np[:border_h, :].flatten())
+        border_pixels.extend(gray_np[-border_h:, :].flatten())
+        border_pixels.extend(gray_np[:, :border_w].flatten())
+        border_pixels.extend(gray_np[:, -border_w:].flatten())
+        mean_border = np.mean(border_pixels)
+
+        center_y_start = int(h * 0.25)
+        center_y_end = int(h * 0.75)
+        center_x_start = int(w * 0.25)
+        center_x_end = int(w * 0.75)
+        center_pixels = gray_np[center_y_start:center_y_end, center_x_start:center_x_end]
+        mean_center = np.mean(center_pixels)
+
+        if mean_center < 35.0:
+            return False, "Image is too dark."
+
+        if mean_center > 240.0:
+            return False, "Image is too bright."
+
+        return True, "Valid chest X-ray."
+    except Exception as e:
+        return False, f"Error validating image structure: {str(e)}"
 
 
 CLASS_NAMES = [
@@ -131,6 +191,11 @@ def predict():
     except Exception:
         return jsonify({"error": "Invalid image file"}), 400
 
+    # Validate image is a chest X-ray
+    is_valid, validation_msg = validate_chest_xray(image)
+    if not is_valid:
+        return jsonify({"error": f"Invalid Image: {validation_msg} Please upload a valid chest X-ray image."}), 400
+
     try:
         img_tensor = process_image(image).to(device)
 
@@ -159,5 +224,5 @@ def predict():
 
 if __name__ == "__main__":
     # For development only
-    app.run(host="0.0.0.0", port=5000, debug=True)
+    app.run(host="0.0.0.0", port=5002, debug=True)
 

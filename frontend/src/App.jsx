@@ -91,6 +91,40 @@ function App() {
     setPreviewUrl(url);
   };
 
+  const handleLoadDemo = async () => {
+    try {
+      setError(null);
+      const response = await fetch("/demo_xray.jpg");
+      if (!response.ok) throw new Error("Demo image not found");
+      const blob = await response.blob();
+      const file = new File([blob], "demo_xray.jpg", { type: "image/jpeg" });
+      setSelectedFile(file);
+      setResult(null);
+      const url = URL.createObjectURL(file);
+      setPreviewUrl(url);
+    } catch (err) {
+      console.error(err);
+      setError("Failed to load demo X-ray image. Make sure public/demo_xray.jpg exists.");
+    }
+  };
+
+  const handleLoadNonXrayDemo = async () => {
+    try {
+      setError(null);
+      const response = await fetch("/non_xray_demo.png");
+      if (!response.ok) throw new Error("Non-X-ray demo image not found");
+      const blob = await response.blob();
+      const file = new File([blob], "non_xray_demo.png", { type: "image/png" });
+      setSelectedFile(file);
+      setResult(null);
+      const url = URL.createObjectURL(file);
+      setPreviewUrl(url);
+    } catch (err) {
+      console.error(err);
+      setError("Failed to load non-X-ray demo image. Make sure public/non_xray_demo.png exists.");
+    }
+  };
+
   const handlePatientContinue = (e) => {
     e.preventDefault();
     setError(null);
@@ -124,7 +158,8 @@ function App() {
       const formData = new FormData();
       formData.append("file", selectedFile);
 
-      const response = await fetch("/api/predict", {
+      const backendBaseUrl = import.meta.env.VITE_API_URL || "";
+      const response = await fetch(`${backendBaseUrl}/api/predict`, {
         method: "POST",
         body: formData,
       });
@@ -268,6 +303,25 @@ function App() {
               />
               <span>Drop your image here or click to browse</span>
             </label>
+
+            <div style={{ display: "flex", gap: "0.5rem", marginTop: "-0.5rem", marginBottom: "0.5rem" }}>
+              <button
+                type="button"
+                className="secondary-btn demo-btn"
+                onClick={handleLoadDemo}
+                style={{ flex: 1, margin: 0 }}
+              >
+                ✨ Load Demo X-Ray
+              </button>
+              <button
+                type="button"
+                className="secondary-btn demo-btn"
+                onClick={handleLoadNonXrayDemo}
+                style={{ flex: 1, margin: 0, borderColor: "#fca5a5", color: "#b91c1c" }}
+              >
+                ⚠️ Load Non-X-Ray Demo
+              </button>
+            </div>
 
             {previewUrl && (
               <div className="preview">
