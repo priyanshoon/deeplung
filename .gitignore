@@ -10,7 +10,10 @@ __pycache__/
 checkpoints/
 checkpoints_dryrun/
 *.pth
+!checkpoints/best_model.pth
+!checkpoints_dryrun/best_model.pth
 .ipynb_checkpoints/
+
 
 # Frontend
 frontend/node_modules/
@@ -52,8 +55,8 @@ frontend/*.local
 *.sw?
 
 # Optional ML folders (usually not pushed)
-checkpoints/
-checkpoints_dryrun/
+!checkpoints/best_model.pth
+!checkpoints_dryrun/best_model.pth
 
 # Dataset folder (usually not pushed)
 data/
