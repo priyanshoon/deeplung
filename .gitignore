@@ -9,7 +9,6 @@ __pycache__/
 *.pyc
 .DS_Store
 .env
-checkpoints/
 checkpoints_dryrun/
 *.pth
 !checkpoints/best_model.pth
@@ -62,8 +61,11 @@ frontend/*.local
 
 # Dataset folder (usually not pushed)
 data/
+<<<<<<< HEAD
 
 # Image files
 *.jpg
 *.jpeg
 *.png
+=======
+>>>>>>> c5f8065 (added development variables and something that make my life a bit easier)
