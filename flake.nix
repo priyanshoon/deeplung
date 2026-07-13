@@ -204,7 +204,7 @@
             };
           };
 
-          services.nginx.virtualHosts."deeplung.example.com" = {
+          services.nginx.virtualHosts."deeplung.priyanshoon.me" = {
             enableACME = true;
             forceSSL = true;
             root = "${frontend}";
