@@ -209,7 +209,7 @@
             forceSSL = true;
             root = "${frontend}";
             locations."/api/" = {
-              proxyPass = "http://127.0.0.1:8000/";
+              proxyPass = "http://127.0.0.1:8000";
             };
             locations."/" = {
               tryFiles = "$uri $uri/ /index.html";
