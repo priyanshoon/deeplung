@@ -1,7 +1,9 @@
 venv/
+.venv/
 data/
 dummy_data/
 dataset/
+randomtest/
 archive.zip
 __pycache__/
 *.pyc
@@ -60,3 +62,8 @@ frontend/*.local
 
 # Dataset folder (usually not pushed)
 data/
+
+# Image files
+*.jpg
+*.jpeg
+*.png

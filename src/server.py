@@ -25,24 +25,24 @@ def resolve_model_path() -> str:
 
 
 def validate_chest_xray(img: Image.Image) -> tuple[bool, str]:
+    error_msg = "The file isn't an X-ray image. Please upload a different image"
     try:
         # 1. Format/Dimensions check
         width, height = img.size
         aspect_ratio = width / height
         if aspect_ratio < 0.5 or aspect_ratio > 2.0:
-            return False, f"Invalid aspect ratio ({aspect_ratio:.2f}). Chest X-rays should be roughly square."
+            return False, error_msg
 
         img_np = np.array(img)
+        if len(img_np.shape) >= 3 and img_np.shape[2] >= 3:
+            # 2. Color check: Check if there are colored pixels
+            max_c = img_np[:, :, :3].max(axis=-1).astype(float)
+            min_c = img_np[:, :, :3].min(axis=-1).astype(float)
+            diff = max_c - min_c
+            colored_pixels_ratio = np.mean(diff > 10)
 
-        # 2. Color check: standard deviation across color channels
-        # For grayscale images, R, G, B channels are identical or very close.
-        rg_diff = np.abs(img_np[:, :, 0].astype(float) - img_np[:, :, 1].astype(float))
-        gb_diff = np.abs(img_np[:, :, 1].astype(float) - img_np[:, :, 2].astype(float))
-        br_diff = np.abs(img_np[:, :, 2].astype(float) - img_np[:, :, 0].astype(float))
-        color_diff = (rg_diff.mean() + gb_diff.mean() + br_diff.mean()) / 3.0
-
-        if color_diff > 12.0:
-            return False, f"Image is colored (color variance: {color_diff:.2f})."
+            if colored_pixels_ratio > 0.005:  # more than 0.5% pixels have distinct color
+                return False, error_msg
 
         # 3. Contrast check: X-rays have rib/spine structures which create high contrast
         gray_img = img.convert('L')
@@ -50,20 +50,10 @@ def validate_chest_xray(img: Image.Image) -> tuple[bool, str]:
         std_dev = gray_np.std()
 
         if std_dev < 15.0:
-            return False, f"Image contrast is too low (std dev: {std_dev:.2f})."
+            return False, error_msg
 
         # 4. Brightness distribution check (borders vs center)
         h, w = gray_np.shape
-        border_w = int(w * 0.1)
-        border_h = int(h * 0.1)
-
-        border_pixels = []
-        border_pixels.extend(gray_np[:border_h, :].flatten())
-        border_pixels.extend(gray_np[-border_h:, :].flatten())
-        border_pixels.extend(gray_np[:, :border_w].flatten())
-        border_pixels.extend(gray_np[:, -border_w:].flatten())
-        mean_border = np.mean(border_pixels)
-
         center_y_start = int(h * 0.25)
         center_y_end = int(h * 0.75)
         center_x_start = int(w * 0.25)
@@ -72,14 +62,14 @@ def validate_chest_xray(img: Image.Image) -> tuple[bool, str]:
         mean_center = np.mean(center_pixels)
 
         if mean_center < 35.0:
-            return False, "Image is too dark."
+            return False, error_msg
 
         if mean_center > 240.0:
-            return False, "Image is too bright."
+            return False, error_msg
 
-        return True, "Valid chest X-ray."
-    except Exception as e:
-        return False, f"Error validating image structure: {str(e)}"
+        return True, ""
+    except Exception:
+        return False, error_msg
 
 
 CLASS_NAMES = [
@@ -102,6 +92,8 @@ def get_device() -> torch.device:
 def process_image(image: Image.Image) -> torch.Tensor:
     transform = transforms.Compose(
         [
+            transforms.Grayscale(num_output_channels=3),
+            transforms.RandomEqualize(p=1.0),
             transforms.Resize((224, 224)),
             transforms.ToTensor(),
             transforms.Normalize(
@@ -197,7 +189,7 @@ def predict():
     # Validate image is a chest X-ray
     is_valid, validation_msg = validate_chest_xray(image)
     if not is_valid:
-        return jsonify({"error": f"Invalid Image: {validation_msg} Please upload a valid chest X-ray image."}), 400
+        return jsonify({"error": validation_msg}), 400
 
     try:
         img_tensor = process_image(image).to(device)
