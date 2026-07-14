@@ -73,3 +73,6 @@ Open the URL shown by Vite (usually `http://localhost:5173`). Upload a chest X-r
 
 ## ⚠️ Note
 This project is for **educational purposes only**. It is not a certified medical device and should not be used for actual medical diagnosis.
+
+## 🛡️ Security & Validation
+The API includes a robust validation step to ensure uploaded images are actual chest X-rays. It checks for aspect ratio, color variance, contrast, and brightness distribution to reject regular photos, screenshots, or non-medical images before processing.

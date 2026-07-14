@@ -10,3 +10,4 @@ seaborn
 streamlit
 flask
 flask-cors
+gunicorn
