@@ -1,0 +1,57 @@
+venv/
+data/
+dummy_data/
+dataset/
+archive.zip
+__pycache__/
+*.pyc
+.DS_Store
+.env
+checkpoints_dryrun/
+*.pth
+.ipynb_checkpoints/
+
+# Frontend
+frontend/node_modules/
+frontend/dist/
+
+
+# Logs
+logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+
+# Frontend dependencies and build output
+frontend/node_modules/
+frontend/dist/
+frontend/dist-ssr/
+
+# Local environment files
+frontend/*.local
+
+# VS Code
+.vscode/*
+!.vscode/extensions.json
+
+# IDE files
+.idea/
+
+# OS files
+.DS_Store
+
+# Visual Studio files
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+
+# Optional ML folders (usually not pushed)
+checkpoints_dryrun/
+
+# Dataset folder (usually not pushed)
+data/
