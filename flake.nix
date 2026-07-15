@@ -158,30 +158,6 @@
             '';
           });
 
-          # frontend = pkgs.stdenv.mkDerivation (finalAttrs: {
-          #   pname = "deeplung-frontend";
-          #   version = "0.1.0";
-          #   src = ./frontend;
-          #
-          #   nativeBuildInputs = [ pkgs.nodejs_22 pkgs.pnpm.configHook pkgs.pnpm_10 ];
-          #
-          #   pnpmDeps = pkgs.pnpm.fetchDeps {
-          #     inherit (finalAttrs) pname version src;
-          #     pnpm = pkgs.pnpm_10;
-          #     fetcherVersion = 3;
-          #     hash = ""; # nix will print the correct hash on first build; paste it in
-          #   };
-          #
-          #   buildPhase = ''
-          #     pnpm run build
-          #   '';
-          #
-          #   installPhase = ''
-          #     mkdir -p $out
-          #     cp -r dist/* $out/
-          #   '';
-          # });
-
           default = self.packages.${system}.backend;
         });
 
